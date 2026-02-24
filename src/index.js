@@ -1,5 +1,7 @@
+import "dotenv/config";
 import express from "express";
 import http from "http";
+import { securityMiddleware } from "./arcjet.js";
 import { matchRouter } from "./routes/matches.js";
 import { attachWebSocketServer } from "./ws/server.js";
 
@@ -15,6 +17,8 @@ app.get("/", (req, res) => {
   res.send("Hello from Express Server");
 });
 
+app.use(securityMiddleware());
+
 app.use("/matches", matchRouter);
 
 const { broadcastMatchCreated } = attachWebSocketServer(server);
@@ -26,6 +30,6 @@ server.listen(PORT, HOST, () => {
 
   console.log(`Server is running on: ${baseUrl}`);
   console.log(
-    `Websocket Server is running on ${baseUrl.replace("http", "ws")}/ ws`,
+    `Websocket Server is running on ${baseUrl.replace("http", "ws")}/ws`,
   );
 });
