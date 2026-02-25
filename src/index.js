@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import http from "http";
 import { securityMiddleware } from "./arcjet.js";
+import { commentaryRouter } from "./routes/commentary.js";
 import { matchRouter } from "./routes/matches.js";
 import { attachWebSocketServer } from "./ws/server.js";
 
@@ -17,12 +18,24 @@ app.get("/", (req, res) => {
   res.send("Hello from Express Server");
 });
 
-app.use(securityMiddleware());
+app.use((req, _res, next) => {
+  console.log("REQ:", req.method, req.url);
+  next();
+});
+
+if (process.env.NODE_ENV === "production") {
+  app.use(securityMiddleware());
+}
+
+// app.use(securityMiddleware());
 
 app.use("/matches", matchRouter);
+app.use("/matches/:id/commentary", commentaryRouter);
 
-const { broadcastMatchCreated } = attachWebSocketServer(server);
+const { broadcastMatchCreated, broadcastCommentary } =
+  attachWebSocketServer(server);
 app.locals.broadcastMatchCreated = broadcastMatchCreated;
+app.locals.broadcastCommentary = broadcastCommentary;
 
 server.listen(PORT, HOST, () => {
   const baseUrl =
