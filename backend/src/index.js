@@ -13,11 +13,29 @@ import cors from "cors";
 const PORT = Number(process.env.PORT || 8000);
 const HOST = process.env.HOST || "0.0.0.0";
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://real-time-scorez-websockets.vercel.app",
+];
+
+// Allow Vercel Preview Deployments too
+function isAllowedOrigin(origin) {
+  if (!origin) return true; // curl/postman/no-origin requests
+  if (allowedOrigins.includes(origin)) return true;
+  if (origin.endsWith(".vercel.app")) return true; // previews
+  return false;
+}
+
 const app = express();
 const server = http.createServer(app);
+
 app.use(
   cors({
-    origin: true,
+    origin: (origin, cb) => {
+      if (isAllowedOrigin(origin)) return cb(null, true);
+      return cb(new Error(`CORS blocked for origin: ${origin}`));
+    },
   }),
 );
 
