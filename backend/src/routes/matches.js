@@ -38,12 +38,28 @@ matchRouter.get("/", async (req, res) => {
       .orderBy(desc(matches.createdAt))
       .limit(limit);
 
+    // recompute + persist status so the UI never shows stale "live"
+    const updates = [];
+    for (const m of data) {
+      const nextStatus = getMatchStatus(m.startTime, m.endTime);
+      if (nextStatus && m.status !== nextStatus) {
+        m.status = nextStatus; // keep response truthful
+        updates.push(
+          db
+            .update(matches)
+            .set({ status: nextStatus })
+            .where(eq(matches.id, m.id)),
+        );
+      }
+    }
+
+    if (updates.length) await Promise.all(updates);
+
     res.json({ data });
   } catch (e) {
     res.status(500).json({ error: "Failed to list matches." });
   }
 });
-
 matchRouter.post("/", async (req, res) => {
   const parsed = createMatchSchema.safeParse(req.body);
 
@@ -57,6 +73,9 @@ matchRouter.post("/", async (req, res) => {
     data: { startTime, endTime, homeScore, awayScore },
   } = parsed;
 
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+
   try {
     const [event] = await db
       .insert(matches)
@@ -66,7 +85,7 @@ matchRouter.post("/", async (req, res) => {
         endTime: new Date(endTime),
         homeScore: homeScore ?? 0,
         awayScore: awayScore ?? 0,
-        status: getMatchStatus(startTime, endTime),
+        status: getMatchStatus(start, end),
       })
       .returning();
 
