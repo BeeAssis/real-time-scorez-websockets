@@ -23,10 +23,12 @@ commentaryRouter.get("/", async (req, res) => {
 
   const queryResult = listCommentaryQuerySchema.safeParse(req.query);
   if (!queryResult.success) {
-    return res.status(400).json({
-      error: "Invalid query parameters.",
-      details: queryResult.error.issues,
-    });
+    return res
+      .status(400)
+      .json({
+        error: "Invalid query parameters.",
+        details: queryResult.error.issues,
+      });
   }
 
   try {
@@ -61,10 +63,12 @@ commentaryRouter.post("/", async (req, res) => {
   const bodyResult = createCommentarySchema.safeParse(req.body);
 
   if (!bodyResult.success) {
-    return res.status(400).json({
-      error: "Invalid commentary payload.",
-      details: bodyResult.error.issues,
-    });
+    return res
+      .status(400)
+      .json({
+        error: "Invalid commentary payload.",
+        details: bodyResult.error.issues,
+      });
   }
 
   try {
